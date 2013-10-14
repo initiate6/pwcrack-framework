@@ -184,14 +184,32 @@ class windowsInfo():
         
     #Get CPU info on Windows computers.
     def getCPUinfo():
-        argsCore = 'wmic', 'computersystem', 'get', 'NumberOfLogicalProcessors'
+        
         argsCPUs = 'wmic', 'computersystem', 'get', 'NumberOfProcessors'
-
         getCPUs = Popen(argsCPUs, stdout=PIPE)
         CPUs = getCPUs.communicate()[0]
+        cpus = str(CPUs, encoding='utf-8').strip('\r\n ').split()[1]
+
+        argsCore = 'wmic', 'CPU', 'get', 'NumberOfCores'
         getCores = Popen(argsCore, stdout=PIPE)
         cores = getCores.communicate()[0]
+        cores = str(cores, encoding='utf-8').strip('\r\n ').split()[1]
+
+        argsSpeed = 'wmic', 'CPU', 'get', 'MaxClockSpeed'
+        getSpeed = Popen(argsSpeed, stdout=PIPE)
+        speed = getSpeed.communicate()[0]
+        speed = str(speed, encoding='utf-8').strip('\r\n ').split()[1]
         
-        return CPUs, cores
+        argsName = 'wmic', 'CPU', 'get', 'Name'
+        getCname = Popen(argsName, stdout=PIPE)
+        cname = getCname.communicate()[0]
+        cname = str(cname, encoding='utf-8').strip('\r\n ').split()[1]
+        
+        argsVendor = 'wmic', 'CPU', 'get', 'Manufacturer'
+        getVendor = Popen(argsVendor, stdout=PIPE)
+        vendor = getVendor.communicate()[0]
+        vendor = str(vendor, encoding='utf-8').strip('\r\n ').split()[1]
+
+        return cpus, cores, speed, cname, vendor
 
 
