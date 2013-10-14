@@ -8,29 +8,19 @@
 #    from subprocess import Popen, PIPE
 #if system == 'Linux':
 #    import subprocess
-
-class LinuxInfo:
+'''
+class LinuxInfo():
+    
     import subprocess
 
-    def getGpuMemory():
-	try:
-	        clinfo_process = subprocess.Popen(['clinfo'], 
-	                                            stdout=subprocess.PIPE)
-	        
-	        grep1_process = subprocess.Popen(['grep', 'Max memory allocation'],
-	                                            stdin=clinfo_process.stdout,
-	                                            stdout=subprocess.PIPE)
-	        cut_process = subprocess.Popen(['cut', '-d:', '-f2'],
-	                                            stdin=grep1_process.stdout,
-	                                            stdout=subprocess.PIPE)
-	                                                            
-	        gpuMem = cut_process.communicate()[0] 
-	        gpuMem = int(gpuMem.split()[0]) / 1024 / 1024
-		
-		return str(gpuMem)
-	except:
-		return 0
-
+    #def getGpuMemory():
+        #clinfo_process = subprocess.Popen(['clinfo'], stdout=subprocess.PIPE)
+	#grep1_process = subprocess.Popen(['grep', 'Max memory allocation'], stdin=clinfo_process.stdout, stdout=subprocess.PIPE)
+	#cut_process = subprocess.Popen(['cut', '-d:', '-f2'], stdin=grep1_process.stdout, stdout=subprocess.PIPE)
+	#gpuMem = cut_process.communicate()[0]
+	#gpuMem = int(gpuMem.split()[0]) / 1024 / 1024
+	#return str(gpuMem)
+    
     def checkamddriver():
 	try:
 
@@ -168,17 +158,22 @@ class LinuxInfo:
         stdoutdata = awk_process.communicate()[0]
         ramsize = int(stdoutdata) / 1024 / 1024
         return ramsize
-
-class windowsInfo:
-
-    #Checks if system is 64bit.
-    def checkBits():
-        bits = sys.maxsize > 2**32
-        if bits == True:
-            return "64bit"
+    '''
+import sys, string, re
+from subprocess import Popen, PIPE
+import winreg
+class windowsInfo():
+    
+    def getBits():
+        argsBits = 'wmic', 'computersystem', 'get', 'SystemType'
+        getBits = Popen(argsBits, stdout=PIPE)
+        output = getBits.communicate()[0]
+        if re.search('64', str(output)):
+            bits = 64
         else:
-            return "32bit"
-
+            bits = 32
+        return bits
+            
     def getRAMinfo():
         args = 'wmic', 'computersystem', 'get', 'TotalPhysicalMemory'
         getRam = Popen(args, stdout=PIPE)
@@ -189,91 +184,14 @@ class windowsInfo:
         
     #Get CPU info on Windows computers.
     def getCPUinfo():
-        """Retrieves Machine information from the registry"""
-        cpuInfo = []
-        try:
-           hHardwareReg = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "HARDWARE")
-           hDescriptionReg = _winreg.OpenKey(hHardwareReg, "DESCRIPTION")
-           hSystemReg = _winreg.OpenKey(hDescriptionReg, "SYSTEM")
-           hCentralProcessorReg = _winreg.OpenKey(hSystemReg, "CentralProcessor")
-           nbProcessors = _winreg.QueryInfoKey(hCentralProcessorReg)[0]
+        argsCore = 'wmic', 'computersystem', 'get', 'NumberOfLogicalProcessors'
+        argsCPUs = 'wmic', 'computersystem', 'get', 'NumberOfProcessors'
 
-           for idxKey in range(nbProcessors):
-               hProcessorIDReg = _winreg.OpenKey(hCentralProcessorReg, str(idxKey))
-               processorDescription = _winreg.QueryValueEx(hProcessorIDReg,"ProcessorNameString")[0]
-               mhz = _winreg.QueryValueEx(hProcessorIDReg, "~MHz")[0]
-               cpuInfo.append(str(idxKey)+'.'+string.lstrip(processorDescription)+'.'+str(mhz))
-                
-           return cpuInfo
+        getCPUs = Popen(argsCPUs, stdout=PIPE)
+        CPUs = getCPUs.communicate()[0]
+        getCores = Popen(argsCore, stdout=PIPE)
+        cores = getCores.communicate()[0]
+        
+        return CPUs, cores
 
-        except WindowsError:
-           print "Cannot retrieve processor information from registry!"
 
-    #Get GPU info on Windows computers.
-    def getGPUinfo():
-        try:
-            hHardwareReg = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, "HARDWARE")
-            hDeviceMapReg = _winreg.OpenKey(hHardwareReg, "DEVICEMAP")
-            hVideoReg = _winreg.OpenKey(hDeviceMapReg, "VIDEO")
-            hVideoDevices = _winreg.QueryInfoKey(hVideoReg)[1]
-            VideoCardString = []
-            for x in range(0, hVideoDevices, 1):
-                VideoCardString.append(_winreg.EnumValue(hVideoReg, x)[1])
-                ClearnVideoCardString = []
-                for line in VideoCardString:
-                    ClearnVideoCardString.append("\\".join(str(line).split("\\")[3:]))
-
-                    done = False #So it only runs once for GPU info. 
-                    #Get the graphics card information
-                    for line in ClearnVideoCardString:
-                        for item in line.split("\\")[2:3]:
-                            if done == False and item == 'Control':
-                                hVideoCardReg = _winreg.OpenKey(_winreg.HKEY_LOCAL_MACHINE, str(line))
-                                VideoCardDescription  = _winreg.QueryValueEx(hVideoCardReg,"Device Description")[0]
-                                
-                                #check if its a AMD/ATI card and if so return detailed info.
-                                if re.search('AMD|ATI', str(VideoCardDescription)) != None:
-                                    gpuDesc = str(VideoCardDescription)
-                                    amdCatalystVer = _winreg.QueryValueEx(hVideoCardReg, "Catalyst_Version")[0]
-                                    VideoCardMemorySize = _winreg.QueryValueEx(hVideoCardReg,"HardwareInformation.MemorySize")[0]
-                                    gpuMem = str(VideoCardMemorySize / 1024 / 1024)
-                                    gpuType = "ocl"
-                                    done = True 
-                            
-                            
-                                #check if its a Nvidia card and if so return detailed info.
-                                elif re.search('nvidia', str(VideoCardDescription)) != None:
-                                    gpuDesc = str(VideoCardDescription)
-                                    nvDriverVer = _winreg.QueryValueEx(hVideoCardReg, "DriverVersion")[0]
-                                    VideoCardMemorySize = _winreg.QueryValueEx(hVideoCardReg,"HardwareInformation.MemorySize")[0]
-                                    gpuMem = str(VideoCardMemorySize / 1024 / 1024)
-                                    gpuType = "cuda"
-                                    done = True
-
-                #breaks to step out of for loops once done.                                        
-                        if done == True:
-                            break
-                    if done == True:
-                        break
-                if done == True:
-                    break
-                
-            #checks if gpu driver is good and return info
-            if re.search('AMD|ATI', gpuDesc):
-                if amdCatalystVer == '13.1':
-                    return gpuType, gpuDesc, amdCatalystVer, VideoCardMemorySize
-                else:
-                    print "Your GPU driver for  %s is %s and needs to be upgraded or downgraded to match oclhashcat requirements 13.1" % ( gpuDesc, amdCatalystVer )
-                    return None, None, None, None
-                
-            elif re.search('nvidia', gpuDesc):
-                if float(nvDriverVer) >= float(310.02):
-                    return gpuType, gpuDesc, nvDriverVer, VideoCardMemorySize
-                else:
-                    print "Your GPU driver for  %s is %s and needs to be upgraded or downgraded to match oclhashcat requirements 13.1" % ( gpuDesc, nvDriverVer )
-                    return None, None, None, None
-            else:
-                return None, None, None, None
-         
-        except WindowsError:
-            print "Cannot Retrieve Graphics Card Name and Memory Size!"
