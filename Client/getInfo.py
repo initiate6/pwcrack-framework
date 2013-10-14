@@ -20,16 +20,29 @@
 # client.py will only call getInfo.py if info.json file doesn't exist or --re-config.
 
 import pycl as cl
+import re
+
+cpu = []
+gpu = []
 
 CL_Devices = cl.clGetDeviceIDs()
 for device in CL_Devices:
-        print("===============================================================")
-        print("Device name:", device.name)
-        print("Device vendor:", device.vendor)
-        print("Device version:", device.version)
-        print("Device platform:", device.platform)
-        print("Device addressBits:", device.address_bits)
-        print("Device memory: ", int(device.local_mem_size) / 1024, 'GB')
-        print("Device memory: ", int(device.global_mem_size) / 1024/1024, 'MB')
-        print("Device max clock speed:", device.max_clock_frequency, 'MHz')
-        print("Device compute units:", device.max_compute_units)
+	if re.search('CPU', str(device.type)):
+		print("===============================================================")
+		print("Device name:", device.name)
+		print("Device vendor:", device.vendor)
+		print("Device Type:", device.type)
+		print("Device addressBits:", device.address_bits)
+		print("Device memory: ", int(device.local_mem_size) / 1024, 'GB')
+		print("Device max clock speed:", device.max_clock_frequency, 'MHz')
+		print("Device compute units:", device.max_compute_units)
+	else:
+		print("===============================================================")
+		print("Device name:", device.name)
+		print("Device vendor:", device.vendor)
+		print("Device version:", device.version)
+		print("Device platform:", device.platform)
+		print("Device Type:", device.type)
+		print("Device memory: ", int(device.global_mem_size) / 1024/1024, 'MB')
+		print("Device max clock speed:", device.max_clock_frequency, 'MHz')
+		print("Device compute units:", device.max_compute_units)
