@@ -1,0 +1,32 @@
+{
+    "CPUs": {
+        "CPU1": {
+            "DeviceBits": 64, 
+            "DeviceCores": 2, 
+            "DeviceName": "AMD E-350 Processor", 
+            "DeviceSpeedMHz": 1596, 
+            "DeviceVendor": "AuthenticAMD"
+        }
+    }, 
+    "GPUs": {
+        "GPU1": {
+            "Device memory": 256.0, 
+            "DeviceBits": 32, 
+            "DeviceCores": 2, 
+            "DeviceName": "Loveland", 
+            "DeviceSpeedMHz": 492, 
+            "DeviceVendor": "Advanced Micro Devices, Inc.", 
+            "GpuType": "ocl", 
+            "gpuDriver": 1084.4
+        }
+    }, 
+    "System": {
+        "Bits": 64, 
+        "CPUs": 1, 
+        "ClientID": "W611o.4501", 
+        "GPUs": 1, 
+        "OS": "Windows", 
+        "RAM": 32.0, 
+        "email": "init6@init6.me"
+    }
+}

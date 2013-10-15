@@ -42,7 +42,6 @@ def main():
     #Get operating system.
     system = platform.system()     
 
-
     #Get RAM, bits, CPU and GPU information.
     CPUcount = 0
     GPUcount = 0
@@ -53,6 +52,7 @@ def main():
     if CL == 'openCL':    
         CL_Devices = cl.clGetDeviceIDs()
         for device in CL_Devices:
+            #CPUs
             if re.search('CPU', str(device.type)):
                 CPUcount += 1
                 CPUd = dict([("DeviceName", str(device.name)), \
@@ -64,13 +64,18 @@ def main():
                             
                 
                 json_db['CPUs']['CPU'+str(CPUcount)] = CPUd
-
+            #GPUs
             elif re.search('GPU', str(device.type)):
                 GPUcount += 1
-                if re.search('AMD', str(device.vendor)):
+                if re.search( '(AMD|Advanced Micro Device)', str(device.vendor) ):
                     gpuType = 'ocl'
-                    #Do a RE for ###.# and test its above cut off
-                    gpuDriver = 'test'
+                    #Verify GPU driver version is 13.1 or higher.
+                    gpuDriverTest = float(str(device.version).split()[3].strip('() ') )
+                    if gpuDriverTest >= 1084.4:
+                        gpuDriver = gpuDriverTest
+                    else:
+                        gpuDriver = None
+                        
                 elif re.search('NV', str(device.vendor)):
                     gpuType = 'cuda'
                     #Do a RE for ###.# and test its above cut off
@@ -79,16 +84,16 @@ def main():
                     gpuType = None
                     gpuDriver = None
                             
-                    GPUd = dict([("DeviceName", str(device.name)), \
+                GPUd = dict([("DeviceName", str(device.name)), \
                                  ("DeviceVendor", str(device.vendor)), \
-                                 ("Device platform", str(device.platform)), \
                                  ("DeviceBits", int(device.address_bits)), \
                                  ("Device memory", int(device.global_mem_size) / 1024/1024 ), \
                                  ("DeviceSpeedMHz", int(device.max_clock_frequency)), \
                                  ("DeviceCores", int(device.max_compute_units)), \
                                  ("GpuType", str(gpuType)), \
+                                 ("gpuDriver", gpuDriver), \
                                  ])
-                    json_db['GPUs']['GPU'+str(GPUcount)] = GPUd
+                json_db['GPUs']['GPU'+str(GPUcount)] = GPUd
             else:
                     print("Unknown device")
 
@@ -130,10 +135,9 @@ def main():
                         ])
         json_db['System'] = SYSd
         
-
-        
-    test = json.dumps(json_db, sort_keys=True, indent=4)
-    print (test)
-    #TODO Save to file info.json
+    with open('info.json', 'w') as f:
+        f.write(json.dumps(json_db, sort_keys=True, indent=4))
+        f.close
+    print(json.dumps(json_db, sort_keys=True, indent=4))
 
 main()
