@@ -110,9 +110,15 @@ def main():
         json_db['System'] = SYSd
 
     if CL == 'nonCL':
-        cpus, cores, speed, cname, vendor = nonCL.windowsInfo.getCPUinfo()
-        bits = int(nonCL.windowsInfo.getBits())
-        ram = int(nonCL.windowsInfo.getRAMinfo())
+        if system == 'Windows':
+            cpus, cores, speed, cname, vendor = nonCL.windowsInfo.getCPUinfo()
+            bits = int(nonCL.windowsInfo.getBits())
+            ram = int(nonCL.windowsInfo.getRAMinfo())
+        if system == 'Linux':
+            cpus, cores, speed, cname, vendor = nonCL.linuxInfo().getCPUinfo()
+            bits = int(nonCL.linuxInfo().getBits())
+            ram = int(nonCL.linuxInfo().getRAMinfo())
+        
         for cpu in range(len(cpus)):
             CPUcount += 1
             CPUd = dict([("DeviceName", str(cname)), \
