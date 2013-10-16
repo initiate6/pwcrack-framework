@@ -6,46 +6,72 @@ system = platform.system()
 if system == 'Windows':
     import winreg
 
-for ls /sys/devices/system/cpu/
-ls /sys/devices/system/cpu/ | cpu[0-9]*/topology/core_id
-
 
 class linuxInfo():
-    def getCPUinfo():
+    def getCPUinfo(self):
 
-        cat_process = Popen(['cat', '/proc/cpuinfo'], stdout=PIPE)
+            cat_process = Popen(['cat', '/proc/cpuinfo'], stdout=PIPE)
 
-        grep_process = Popen(['grep', 'physical id\|processor\|name\|MHz'], stdin=cat_process.stdout, stdout=PIPE)
+            grep_process = Popen(['grep', 'vendor_id\|name\|MHz'], stdin=cat_process.stdout, stdout=PIPE)
 
-        cut_process = Popen(['cut', '-d:', '-f2'], stdin=grep_process.stdout, stdout=PIPE)
+            cut_process = Popen(['cut', '-d:', '-f2'], stdin=grep_process.stdout, stdout=PIPE)
 
-        stdoutdata = cut_process.communicate()[0]
+            stdoutdata = cut_process.communicate()[0]
 
-        temp = []
-        for item in stdoutdata.split('\n'):
-            temp.append(item.strip())
+            # how many = cores unquie = cpus cat /sys/devices/system/cpu/cpu[0-9]*/topology/physical_package_id
 
-        cpuInfo = [temp[x:x+4] for x in range(0, int(len(temp)-1),4)]
+            temp = []
+            for item in stdoutdata.split('\n'):
+                temp.append(item.strip())
 
-        CPUcount = 0
-        CoresCount = 0
-        phyid = 0
-        for list in cpuInfo:
-            if phyid == int(list[3]):
-                CoresCount += 1
-            else:
-                phyid += 1
-                CPUcount += 1
-                CoresCount +=1
-            name = list[1]
-            mhz = list[2]
-        if CPUcount == 0:
-            CPUcount = 1
-            
-        cores = CoresCount / CPUcount
+            cpuInfo = [temp[x:x+3] for x in range(0, int(len(temp)-1),3)]
 
-        return CPUcount, cores, speed, name, name
-    
+            for list in cpuInfo:
+                vendor = list[0]
+                name = list[1]
+                mhz = list[2]
+                break
+
+            phyids = []
+            ls_process = Popen(['ls', '/sys/devices/system/cpu/'], stdout=PIPE)
+            grep_process = Popen(['grep', 'cpu[0-9]'], stdin=ls_process.stdout, stdout=PIPE)
+            folders = grep_process.communicate()[0]
+
+            base = '/sys/devices/system/cpu/'
+            for folder in folders.split('\n'):
+                if folder == '':
+                    break
+                args = 'cat', base + str(folder) + '/topology/physical_package_id'
+                cat_ps = Popen(args, stdout=PIPE)
+                out2 = cat_ps.communicate()[0]
+                phyids.append(out2.strip('\n'))
+
+            coreCount = len(phyids)
+            cpuCount = 0
+            phyids = phyids.sort()
+            if phyids != None:
+                for phyid in phyids:
+                    if int(phyid) != cpuCount:
+                        cpuCount += 1
+            #add one to cpu count so counting starts from 1
+            cpuCount += 1
+            cores = coreCount / cpuCount
+            return cpuCount, cores, mhz, name, vendor
+
+    def getBits(self):
+        bits = 64
+        return bits
+
+    def getRAMinfo(self):
+        cat_process = Popen(['cat', '/proc/meminfo'], stdout=PIPE)
+        grep_process = Popen(['grep', 'MemTotal'], stdin=cat_process.stdout, stdout=PIPE)
+        awk_process = Popen(['awk', '{print $2}'], stdin=grep_process.stdout, stdout=PIPE)
+
+        stdoutdata = awk_process.communicate()[0]
+        ramsize = int(stdoutdata) / 1024 / 1024
+        return ramsize
+
+        
 class windowsInfo():
     
     def getBits():

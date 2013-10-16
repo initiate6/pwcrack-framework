@@ -108,7 +108,7 @@ def main():
                           ("ClientID", clientID), \
                         ])
         json_db['System'] = SYSd
-
+    #if the system doesn't have OpenCL then we can't use the GPU's anyways so just get CPU info
     if CL == 'nonCL':
         if system == 'Windows':
             cpus, cores, speed, cname, vendor = nonCL.windowsInfo.getCPUinfo()
@@ -140,7 +140,8 @@ def main():
                           ("ClientID", clientID), \
                         ])
         json_db['System'] = SYSd
-        
+
+    #write json_db to file in human readable format.    
     with open('info.json', 'w') as f:
         f.write(json.dumps(json_db, sort_keys=True, indent=4))
         f.close
